@@ -13,7 +13,8 @@
         <name>CustomLabels</name>
     </types>
     <types>
-        <members>*</members>
+        <members>DataCorrectionBatchFieldUpdateSetting__mdt-DataCorrectionBatchFieldUpdateSetting Layout.layout</members>
+        <members>DataCorrectionBatchSetting__mdt-DataCorrectionBatchSetting Layout.layout</members>
         <name>Layout</name>
     </types>
     <version>38.0</version>
