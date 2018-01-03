@@ -12,6 +12,7 @@
 @isTest
 private class DataCorrectionBatchTest {
 	
+   
     /**
      * Name : crateAccountRecords
      * Parametrs :Integer
@@ -57,6 +58,30 @@ private class DataCorrectionBatchTest {
     }
     
     /**
+     * Name : createSystsemUser
+     * Parametrs: none
+     * Return Type : User
+     * Description: System Admin user instance
+     * 
+     * Date             Version        Author           Summary of Changes
+     * -----------      ----------  ---------------     ------------------------------------------------------
+     * 3/1/2018			1.0			Ishwar Shinde		Initial Draft
+     **/
+     private static User createSystsemUser(){
+        
+        String uniqueUserName = 'systemadmin' + DateTime.now().getTime() + '@testorg1.com';
+        // This code runs as the system user
+        Profile profile = [SELECT Id FROM Profile WHERE Name='System Administrator'];
+        User userRecord = new User(Alias = 'sysdm', Email='systemadmin@testorg1.com',
+        EmailEncodingKey='UTF-8', LastName='Testing', LanguageLocaleKey='en_US',
+        LocaleSidKey='en_US', ProfileId = profile.Id,
+        TimeZoneSidKey='America/Los_Angeles',
+         UserName=uniqueUserName);
+        
+        return userRecord;
+        
+    }
+    /**
      * Name : testAccountUpdate
      * Parametrs: none
      * Return Type : void
@@ -69,10 +94,14 @@ private class DataCorrectionBatchTest {
     private static testmethod void testAccountUpdate(){
         List<Account> accList = crateAccountRecords(1);
         System.assertEquals(1, accList.size());
-        
-		Test.StartTest();
-            DataCorrectionBatch dataCorrectionBatch = new DataCorrectionBatch();
-            Id jobId = Database.executeBatch(dataCorrectionBatch);
+        User admin = createSystsemUser();
+		
+        Test.StartTest();
+            system.runAs(admin){
+            	DataCorrectionBatch dataCorrectionBatch = new DataCorrectionBatch();
+            	Id jobId = Database.executeBatch(dataCorrectionBatch);	    
+            }
+            
 	    Test.StopTest();   
         Map<Id, Account> accountMap = new Map<Id, Account>([Select Id,Enterprise_Account_Status__c,NumberOfEmployees, Type from Account where Id =:accList[0].Id ]);        
         //Verify the Enterprise_Account_Status__c is updated as bronze
@@ -95,7 +124,7 @@ private class DataCorrectionBatchTest {
     private static testmethod void testAccountUpdate_BulkTest(){
         List<Account> accList = crateAccountRecords(10);
         System.assertEquals(10, accList.size());
-       
+        User admin = createSystsemUser();
 		Test.StartTest();
             DataCorrectionBatch dataCorrectionBatch = new DataCorrectionBatch();
             Id jobId = Database.executeBatch(dataCorrectionBatch);
@@ -124,9 +153,12 @@ private class DataCorrectionBatchTest {
                                                                        			DataCorrectionBatchFieldUpdateSetting__mdt 
                                                                        where 
                                                                        			DeveloperName = 'Test_Class_Data_Update_Decimal'];
-        
+        User admin = createSystsemUser();
+        Decimal value;
 		Test.StartTest();
-            Decimal value = (Decimal) DataCorrectionBatchHelper.getValue(mdtList[0]);
+            system.runAs(admin){
+               value  = (Decimal) DataCorrectionBatchHelper.getValue(mdtList[0]);
+            }
 	    Test.StopTest();   
         
         System.assertEquals(20.10, value);
@@ -151,9 +183,12 @@ private class DataCorrectionBatchTest {
                                                                        			DataCorrectionBatchFieldUpdateSetting__mdt 
                                                                        where 
                                                                        			DeveloperName = 'Test_Class_Data_Update_Boolean_True'];
-        
+        User admin = createSystsemUser();
+        Boolean value;
 		Test.StartTest();
-            Boolean value = (Boolean) DataCorrectionBatchHelper.getValue(mdtList[0]);
+        	system.runAs(admin){
+            	value = (Boolean) DataCorrectionBatchHelper.getValue(mdtList[0]);
+            }
 	    Test.StopTest();   
         
         System.assertEquals(true, value);
@@ -178,9 +213,12 @@ private class DataCorrectionBatchTest {
                                                                        			DataCorrectionBatchFieldUpdateSetting__mdt 
                                                                        where 
                                                                        			DeveloperName = 'Test_Class_Data_Update_Boolean_False'];
-        
+        User admin = createSystsemUser();
+        Boolean value;
 		Test.StartTest();
-            boolean value = (boolean) DataCorrectionBatchHelper.getValue(mdtList[0]);
+            system.runAs(admin){
+                 value = (boolean) DataCorrectionBatchHelper.getValue(mdtList[0]);
+            }
 	    Test.StopTest();   
         
         System.assertEquals(false, value );
@@ -205,9 +243,12 @@ private class DataCorrectionBatchTest {
                                                                        			DataCorrectionBatchFieldUpdateSetting__mdt 
                                                                        where 
                                                                        			DeveloperName = 'Test_Class_Data_Update_Boolean_Blank'];
-        
+        User admin = createSystsemUser();
+        Boolean value;
 		Test.StartTest();
-            boolean value = (boolean) DataCorrectionBatchHelper.getValue(mdtList[0]);
+        	system.runAs(admin){
+            	value = (boolean) DataCorrectionBatchHelper.getValue(mdtList[0]);
+            }
 	    Test.StopTest();   
         
         System.assertEquals(false, value );
@@ -232,9 +273,12 @@ private class DataCorrectionBatchTest {
                                                                        			DataCorrectionBatchFieldUpdateSetting__mdt 
                                                                        where 
                                                                        			DeveloperName = 'Test_Class_Data_Update_Date_Today'];
-        
+        User admin = createSystsemUser();
+        Date value;
 		Test.StartTest();
-            Date value = (Date) DataCorrectionBatchHelper.getValue(mdtList[0]);
+        	system.runAs(admin){
+            	value = (Date) DataCorrectionBatchHelper.getValue(mdtList[0]);
+            }
 	    Test.StopTest();   
         
         System.assertEquals(System.today(), value);
@@ -259,9 +303,12 @@ private class DataCorrectionBatchTest {
                                                                        			DataCorrectionBatchFieldUpdateSetting__mdt 
                                                                        where 
                                                                        			DeveloperName = 'Test_Class_Data_Update_DateTime_Now'];
-        
+        User admin = createSystsemUser();
+        DateTime value;
 		Test.StartTest();
-            DateTime value = (DateTime) DataCorrectionBatchHelper.getValue(mdtList[0]);
+        	system.runAs(admin){
+            	value = (DateTime) DataCorrectionBatchHelper.getValue(mdtList[0]);
+            }
 	    Test.StopTest();   
         
         System.assert(System.now() > value);

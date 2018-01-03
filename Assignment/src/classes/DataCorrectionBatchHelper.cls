@@ -284,35 +284,43 @@ public class DataCorrectionBatchHelper {
      **/
     public static void sendBatchCompletionNotification(Database.BatchableContext batchContext, DataCorrectionBatchSetting__mdt dataCorrectionSetting, Integer totalRecords, Integer successfulRecordsCount, Set<String> errorOccured ){
         //Added limit check to avoid batch failure due to emiail limit exceed.
-        //@To DO create labels.
-        if( String.isNotBlank( dataCorrectionSetting.Notification_Emails__c) && (Limits.getLimitEmailInvocations() - Limits.getEmailInvocations()) > 0 ){
-        	String[] emailAddressList =  dataCorrectionSetting.Notification_Emails__c.split(',');
-        	Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();	
-        	//set email address
-        	mail.toAddresses = emailAddressList;
-        	//set subject
-        	mail.setSubject(Label.DCB_EMAIL_SUBJECT + batchContext.getJobID());
-            String recordCnt =  successfulRecordsCount + GlobalConstants.FWD_SLASH +totalRecords;
-        	//set body	
-            String body = GlobalConstants.NEW_LINE + String.format(Label.DCB_BODY_1, new List<String> { recordCnt });
-        	//if errors are occured then add in mail
-        	if(totalRecords != successfulRecordsCount && errorOccured != null){
-        		body += GlobalConstants.NEW_LINE + GlobalConstants.NEW_LINE+ Label.DCB_BODY_2;
-                for( string err : errorOccured){
-                	body += GlobalConstants.NEW_LINE + err;    
+        
+       	String body ='';
+        try{
+            
+            if( String.isNotBlank( dataCorrectionSetting.Notification_Emails__c) ){
+                String[] emailAddressList =  dataCorrectionSetting.Notification_Emails__c.split(',');
+                Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();	
+                //set email address
+                mail.toAddresses = emailAddressList;
+                //set subject
+                mail.setSubject(Label.DCB_EMAIL_SUBJECT + batchContext.getJobID());
+                String recordCnt =  successfulRecordsCount + GlobalConstants.FWD_SLASH +totalRecords;
+                //set body	
+                body = GlobalConstants.NEW_LINE + String.format(Label.DCB_BODY_1, new List<String> { recordCnt });
+                //if errors are occured then add in mail
+                if(totalRecords != successfulRecordsCount && errorOccured != null){
+                    body += GlobalConstants.NEW_LINE + GlobalConstants.NEW_LINE+ Label.DCB_BODY_2;
+                    for( string err : errorOccured){
+                        body += GlobalConstants.NEW_LINE + err;    
+                    }
+                    
                 }
                 
-        	}
-        	
-        	body += GlobalConstants.NEW_LINE + GlobalConstants.NEW_LINE + LABEL.EMAIL_SIGN;
-        	mail.setPlainTextBody(body);
-        	
-            //send email
-            if(! Test.isRunningTest()){ //skip for test class
-            	Messaging.SendEmailResult[] results = Messaging.sendEmail(new Messaging.SingleEmailMessage[] { mail });    
+                body += GlobalConstants.NEW_LINE + GlobalConstants.NEW_LINE + LABEL.EMAIL_SIGN;
+                mail.setPlainTextBody(body);
+                
+                //send email
+                if(! Test.isRunningTest()){ //skip for test class
+                    Messaging.reserveSingleEmailCapacity( GlobalConstants.EMAIL_CAPACITY) ; //addd workaround method to catach email governor limits in advance
+                    Messaging.SendEmailResult[] results = Messaging.sendEmail(new Messaging.SingleEmailMessage[] { mail });     
+                     
+                }
             }
-       		
-        }
+        }catch(Exception ex){
+            System.debug( LoggingLevel.ERROR, 'Email message failure. '+ex.getMessage());
+            System.debug( LoggingLevel.ERROR, 'Email Body - '+ body);
+        } 
     }
     
 }

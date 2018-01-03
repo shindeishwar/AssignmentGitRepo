@@ -28,5 +28,6 @@ public with sharing class GlobalConstants {
     
     //limit constants
     public static final Integer MAX_ERROR_LOG_COUNT = 200;
+    public static final Integer EMAIL_CAPACITY = 1;
 
 }
